@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Salt Preparation Interactive Game</title>
+    <style>
+        :root {
+            --primary: #4F46E5;
+            --success: #10B981;
+            --danger: #EF4444;
+            --warning: #F59E0B;
+            --gray: #E5E7EB;
+            --dark: #1F2937;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #F3F4F6;
+            color: var(--dark);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+        .container {
+            max-width: 1100px;
+            width: 100%;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            padding: 30px;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--gray);
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+        .score-board {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--primary);
+        }
+        
+        /* Intro Screen Styles */
+        #intro-screen {
+            text-align: center;
+            padding: 20px 0;
+        }
+        .intro-title {
+            color: var(--primary);
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        .intro-purpose {
+            font-size: 1.1rem;
+            color: #4B5563;
+            margin-bottom: 30px;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .intro-rules {
+            text-align: left;
+            background: #F9FAFB;
+            padding: 30px;
+            border-radius: 12px;
+            border: 1px solid var(--gray);
+            margin-bottom: 25px;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .intro-rules h3 {
+            margin-top: 0;
+            color: var(--dark);
+            border-bottom: 2px solid var(--gray);
+            padding-bottom: 10px;
+        }
+        .intro-rules ul {
+            font-size: 1.05rem;
+            line-height: 1.6;
+        }
+        .intro-rules li {
+            margin-bottom: 10px;
+        }
+        .intro-credit {
+            font-size: 1rem;
+            color: #6B7280;
+            font-style: italic;
+            margin-bottom: 25px;
+            font-weight: 500;
+        }
+
+        /* Gameplay Area Styles */
+        #play-area { display: none; }
+        
+        .target-salt-container {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background-color: #EEF2FF;
+            border-radius: 8px;
+            border: 2px dashed var(--primary);
+        }
+        .target-salt {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--primary);
+            margin: 10px 0 0 0;
+        }
+        .slots-container {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 30px;
+            justify-content: center;
+            align-items: flex-end;
+            flex-wrap: wrap;
+        }
+        .slot-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 150px;
+        }
+        .slot-label {
+            font-size: 0.75rem;
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #6B7280;
+            text-align: center;
+            min-height: 32px;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+        }
+        .drop-zone {
+            width: 100%;
+            height: 50px;
+            border: 2px dashed #9CA3AF;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            background-color: #F9FAFB;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+        .drop-zone.drag-over {
+            background-color: #D1FAE5;
+            border-color: var(--success);
+        }
+        .drop-zone.filled {
+            background-color: #E0E7FF;
+            border-color: var(--primary);
+            color: var(--primary);
+            border-style: solid;
+        }
+        
+        .word-bank {
+            border: 1px solid var(--gray);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 25px;
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 15px;
+            background-color: #fcfcfc;
+        }
+        .category {
+            display: flex;
+            flex-direction: column;
+        }
+        .category-title {
+            font-size: 0.9rem;
+            font-weight: bold;
+            margin-bottom: 12px;
+            color: #4B5563;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border-bottom: 2px solid var(--gray);
+            padding-bottom: 5px;
+        }
+        .word-pills {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .word {
+            padding: 8px 12px;
+            background-color: white;
+            border: 1px solid #D1D5DB;
+            border-radius: 6px;
+            cursor: grab;
+            font-size: 0.85rem;
+            font-weight: 500;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            transition: all 0.1s;
+            text-align: center;
+        }
+        .word:active {
+            cursor: grabbing;
+        }
+        .word.cation { border-left: 4px solid #3B82F6; }
+        .word.anion { border-left: 4px solid #10B981; }
+        .word.base { border-left: 4px solid #F59E0B; }
+        .word.acid { border-left: 4px solid #EF4444; }
+        .word.method { border-left: 4px solid #8B5CF6; }
+        
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .controls-right {
+            display: flex;
+            gap: 15px;
+        }
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        button:hover { opacity: 0.9; }
+        button:disabled { background-color: var(--gray); cursor: not-allowed; color: #9CA3AF; }
+        .btn-submit { background-color: var(--primary); color: white; }
+        .btn-next { background-color: var(--success); color: white; display: none; }
+        .btn-skip { background-color: var(--danger); color: white; }
+        .btn-large { font-size: 1.2rem; padding: 15px 40px; }
+        
+        .feedback {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            display: none;
+            font-weight: 500;
+        }
+        .feedback.success { background-color: #D1FAE5; color: #065F46; border: 1px solid #34D399; }
+        .feedback.error { background-color: #FEE2E2; color: #991B1B; border: 1px solid #F87171; }
+        
+        /* Summary Screen Styles */
+        #summary-screen { display: none; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 0.9rem; }
+        th, td { padding: 12px; border: 1px solid var(--gray); text-align: left; }
+        th { background-color: #F9FAFB; }
+        .correct-icon { color: var(--success); font-weight: bold; }
+        .wrong-icon { color: var(--danger); font-weight: bold; }
+        .skipped-icon { color: #6B7280; font-weight: bold; }
+        .clear-hint { font-size: 0.7rem; color: #9CA3AF; text-align: center; margin-top: 5px; cursor: pointer; }
+        .clear-hint:hover { color: var(--danger); text-decoration: underline; }
+
+    </style>
+</head>
+<body>
+
+<div class="container" id="game-container">
+    
+    <!-- Introduction Screen -->
+    <div id="intro-screen">
+        <h1 class="intro-title">⚗️ Salt Preparation Master</h1>
+        <p class="intro-purpose">Welcome! This interactive game is designed to help you practise and master the chemical laboratory methods used to prepare various soluble and insoluble salts.</p>
+        
+        <div class="intro-rules">
+            <h3>📖 How to Play</h3>
+            <ul>
+                <li>The game consists of <strong>10 rounds</strong>, covering all three major preparation methods (Titration, Precipitation, and Acid + Insoluble Reactant).</li>
+                <li>Your task is to drag and drop the correct words from the option bank into the five empty slots to build a valid reaction equation and select the correct method.</li>
+                <li>You have a maximum of <strong>two attempts</strong> per question:
+                    <ul>
+                        <li>Correct on 1st attempt: <strong style="color:var(--success);">10 marks</strong></li>
+                        <li>Correct on 2nd attempt: <strong style="color:var(--warning);">5 marks</strong></li>
+                        <li>Incorrect on both attempts: <strong style="color:var(--danger);">0 marks</strong></li>
+                    </ul>
+                </li>
+                <li>If your answer is incorrect on the first try, your words will remain in the boxes so you can easily amend them. Read the feedback below the boxes to understand your mistake!</li>
+            </ul>
+        </div>
+
+        <p class="intro-credit">Credit to Pui Kiu College Chemistry Team</p>
+        
+        <button class="btn-submit btn-large" onclick="initGame()">Start Game ➔</button>
+    </div>
+
+    <!-- Gameplay Area -->
+    <div id="play-area">
+        <div class="header">
+            <h2>⚗️ Salt Preparation Master</h2>
+            <div class="score-board">
+                Round: <span id="round-display">1</span> / 10 &nbsp;|&nbsp; Score: <span id="score-display">0</span>
+            </div>
+        </div>
+
+        <div class="target-salt-container">
+            <div>Your mission is to prepare:</div>
+            <h1 class="target-salt" id="target-salt-name">Loading...</h1>
+            <div id="try-indicator" style="margin-top: 10px; font-size: 0.9rem; color: #6B7280; font-weight: bold;">Attempt 1 (10 Marks available)</div>
+        </div>
+
+        <div class="slots-container">
+            <div class="slot-wrapper">
+                <div class="slot-label">Experimental<br>Method</div>
+                <div class="drop-zone" id="slot-4" ondrop="drop(event)" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" onclick="clearSlot(this)">Drop here</div>
+                <div class="clear-hint" onclick="clearSlot(document.getElementById('slot-4'))">Click to clear</div>
+            </div>
+            
+            <div style="display:flex; align-items:center; font-weight:bold; font-size:1.8rem; color:#9CA3AF; margin: 0 10px 25px 10px;">➔</div>
+
+            <div class="slot-wrapper">
+                <div class="slot-label">Reactant 1<br>(First word)</div>
+                <div class="drop-zone" id="slot-0" ondrop="drop(event)" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" onclick="clearSlot(this)">Drop here</div>
+                <div class="clear-hint" onclick="clearSlot(document.getElementById('slot-0'))">Click to clear</div>
+            </div>
+            <div class="slot-wrapper">
+                <div class="slot-label">Reactant 1<br>(Second word)</div>
+                <div class="drop-zone" id="slot-1" ondrop="drop(event)" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" onclick="clearSlot(this)">Drop here</div>
+                <div class="clear-hint" onclick="clearSlot(document.getElementById('slot-1'))">Click to clear</div>
+            </div>
+            <div style="display:flex; align-items:center; font-weight:bold; font-size:1.8rem; color:#9CA3AF; margin-bottom: 25px;">+</div>
+            <div class="slot-wrapper">
+                <div class="slot-label">Reactant 2<br>(Third word)</div>
+                <div class="drop-zone" id="slot-2" ondrop="drop(event)" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" onclick="clearSlot(this)">Drop here</div>
+                <div class="clear-hint" onclick="clearSlot(document.getElementById('slot-2'))">Click to clear</div>
+            </div>
+            <div class="slot-wrapper">
+                <div class="slot-label">Reactant 2<br>(Fourth word)</div>
+                <div class="drop-zone" id="slot-3" ondrop="drop(event)" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" onclick="clearSlot(this)">Drop here</div>
+                <div class="clear-hint" onclick="clearSlot(document.getElementById('slot-3'))">Click to clear</div>
+            </div>
+        </div>
+
+        <div class="word-bank">
+            <div class="category">
+                <div class="category-title">Methods</div>
+                <div class="word-pills" id="bank-methods"></div>
+            </div>
+            <div class="category">
+                <div class="category-title">Cations</div>
+                <div class="word-pills" id="bank-cations"></div>
+            </div>
+            <div class="category">
+                <div class="category-title">Anions</div>
+                <div class="word-pills" id="bank-anions"></div>
+            </div>
+            <div class="category">
+                <div class="category-title">Bases & States</div>
+                <div class="word-pills" id="bank-bases"></div>
+            </div>
+            <div class="category">
+                <div class="category-title">Acids</div>
+                <div class="word-pills" id="bank-acids"></div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="btn-skip" id="btn-skip" onclick="skipToEnd()">Skip to End</button>
+            <div class="controls-right">
+                <button class="btn-submit" id="btn-submit" onclick="submitAnswer()">Submit Answer</button>
+                <button class="btn-next" id="btn-next" onclick="nextQuestion()">Next Question ➔</button>
+            </div>
+        </div>
+
+        <div id="feedback-box" class="feedback"></div>
+    </div>
+
+    <!-- Summary Area -->
+    <div id="summary-screen">
+        <h2 style="color: var(--primary); text-align: center; font-size: 2.5rem; margin-bottom: 5px;">Game Complete!</h2>
+        <h3 style="text-align: center; margin-top: 0;">Your Final Score: <span id="final-score"></span> / 100</h3>
+        
+        <table id="summary-table">
+            <thead>
+                <tr>
+                    <th>Question (Salt)</th>
+                    <th>Result</th>
+                    <th>Correct Example Answer</th>
+                </tr>
+            </thead>
+            <tbody id="summary-body">
+                <!-- Populated by JS -->
+            </tbody>
+        </table>
+
+        <div style="text-align: center; margin-top: 30px;">
+            <button class="btn-submit btn-large" onclick="showIntro()">Play Again</button>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // Data Configuration: Full database of 78 valid target salts
+    const poolSalts = [
+        'ammonium chloride', 'ammonium ethanoate', 'ammonium nitrate', 'ammonium sulphate', 
+        'barium carbonate', 'barium chloride', 'barium ethanoate', 'barium nitrate', 
+        'barium phosphate', 'barium sulphate', 'barium sulphite', 'calcium carbonate', 
+        'calcium chloride', 'calcium ethanoate', 'calcium nitrate', 'calcium phosphate', 
+        'calcium sulphate', 'calcium sulphite', 'copper (II) carbonate', 'copper (II) chloride', 
+        'copper (II) ethanoate', 'copper (II) nitrate', 'copper (II) phosphate', 'copper (II) sulphate', 
+        'copper (II) sulphite', 'iron (II) carbonate', 'iron (II) chloride', 'iron (II) ethanoate', 
+        'iron (II) nitrate', 'iron (II) phosphate', 'iron (II) sulphate', 'iron (II) sulphite', 
+        'iron (III) carbonate', 'iron (III) chloride', 'iron (III) ethanoate', 'iron (III) nitrate', 
+        'iron (III) phosphate', 'iron (III) sulphate', 'iron (III) sulphite', 'lead (II) bromide', 
+        'lead (II) carbonate', 'lead (II) chloride', 'lead (II) ethanoate', 'lead (II) iodide', 
+        'lead (II) nitrate', 'lead (II) phosphate', 'lead (II) sulphate', 'lead (II) sulphite', 
+        'magnesium carbonate', 'magnesium chloride', 'magnesium ethanoate', 'magnesium nitrate', 
+        'magnesium phosphate', 'magnesium sulphate', 'magnesium sulphite', 'potassium chloride', 
+        'potassium ethanoate', 'potassium nitrate', 'potassium sulphate', 'silver bromide', 
+        'silver carbonate', 'silver chloride', 'silver ethanoate', 'silver iodide', 'silver nitrate', 
+        'silver phosphate', 'silver sulphite', 'sodium chloride', 'sodium ethanoate', 'sodium nitrate', 
+        'sodium sulphate', 'zinc carbonate', 'zinc chloride', 'zinc ethanoate', 'zinc nitrate', 
+        'zinc phosphate', 'zinc sulphate', 'zinc sulphite'
+    ];
+
+    const vocab = {
+        cations: ['sodium', 'potassium', 'ammonium', 'magnesium', 'calcium', 'barium', 'lead (II)', 'iron (II)', 'iron (III)', 'copper (II)', 'silver', 'zinc'],
+        anions: ['nitrate', 'ethanoate', 'hydrogencarbonate', 'chloride', 'bromide', 'iodide', 'sulphate', 'carbonate', 'sulphite', 'phosphate'],
+        bases: ['metal', 'carbonate', 'hydrogencarbonate', 'hydroxide'], // Added hydroxide
+        acids: ['nitric', 'ethanoic', 'hydrochloric', 'sulphuric', 'acid'],
+        methods: ['titration', 'precipitation', 'acid+insoluble reactant']
+    };
+
+    const spa = ['sodium', 'potassium', 'ammonium'];
+    const acidMap = {'nitrate': 'nitric', 'ethanoate': 'ethanoic', 'chloride': 'hydrochloric', 'sulphate': 'sulphuric'};
+
+    // Game State
+    let currentRound = 1;
+    let score = 0;
+    let currentAttempt = 1;
+    let currentSalt = "";
+    let selectedSalts = [];
+    let gameHistory = [];
+
+    // Helper: Solubility Rules
+    function isSoluble(c, a) {
+        if (spa.includes(c)) return true;
+        if (['nitrate', 'ethanoate', 'hydrogencarbonate'].includes(a)) return true;
+        if (['chloride', 'bromide', 'iodide'].includes(a)) return !['silver', 'lead (II)'].includes(c);
+        if (a === 'sulphate') return !['barium', 'lead (II)', 'calcium'].includes(c);
+        return false;
+    }
+
+    // Array Shuffle Function (Fisher-Yates)
+    function shuffleArray(array) {
+        let curId = array.length;
+        while (0 !== curId) {
+            let randId = Math.floor(Math.random() * curId);
+            curId -= 1;
+            let tmp = array[curId];
+            array[curId] = array[randId];
+            array[randId] = tmp;
+        }
+        return array;
+    }
+
+    // Screen Management
+    function showIntro() {
+        document.getElementById('intro-screen').style.display = 'block';
+        document.getElementById('play-area').style.display = 'none';
+        document.getElementById('summary-screen').style.display = 'none';
+    }
+
+    function initGame() {
+        document.getElementById('intro-screen').style.display = 'none';
+        document.getElementById('summary-screen').style.display = 'none';
+        document.getElementById('play-area').style.display = 'block';
+        
+        // Populate Word Bank
+        populateBank('bank-cations', vocab.cations, 'cation');
+        populateBank('bank-anions', vocab.anions, 'anion');
+        populateBank('bank-bases', vocab.bases, 'base');
+        populateBank('bank-acids', vocab.acids, 'acid');
+        populateBank('bank-methods', vocab.methods, 'method');
+
+        currentRound = 1;
+        score = 0;
+        gameHistory = [];
+        
+        // Ensure all 3 methods are covered
+        let titrationSalts = [];
+        let precipitationSalts = [];
+        let acidInsolubleSalts = [];
+
+        poolSalts.forEach(salt => {
+            let c_target = salt.includes('(') ? salt.split(') ')[0] + ')' : salt.split(' ')[0];
+            let a_target = salt.includes('(') ? salt.split(') ')[1] : salt.split(' ')[1];
+            let target_soluble = isSoluble(c_target, a_target);
+
+            if (spa.includes(c_target)) {
+                titrationSalts.push(salt);
+            } else if (!target_soluble) {
+                precipitationSalts.push(salt);
+            } else {
+                acidInsolubleSalts.push(salt);
+            }
+        });
+
+        titrationSalts = shuffleArray(titrationSalts);
+        precipitationSalts = shuffleArray(precipitationSalts);
+        acidInsolubleSalts = shuffleArray(acidInsolubleSalts);
+
+        let guaranteedSelection = [];
+        guaranteedSelection.push(titrationSalts.pop());
+        guaranteedSelection.push(precipitationSalts.pop());
+        guaranteedSelection.push(acidInsolubleSalts.pop());
+
+        let remainingPool = [...titrationSalts, ...precipitationSalts, ...acidInsolubleSalts];
+        remainingPool = shuffleArray(remainingPool);
+        
+        for(let i=0; i<7; i++) {
+            guaranteedSelection.push(remainingPool.pop());
+        }
+
+        selectedSalts = shuffleArray(guaranteedSelection);
+        
+        updateScoreBoard();
+        loadQuestion();
+    }
+
+    function populateBank(containerId, words, cssClass) {
+        const container = document.getElementById(containerId);
+        container.innerHTML = '';
+        words.forEach(word => {
+            let div = document.createElement('div');
+            div.className = `word ${cssClass}`;
+            div.draggable = true;
+            div.innerText = word;
+            div.ondragstart = drag;
+            container.appendChild(div);
+        });
+    }
+
+    // Drag and Drop Logic
+    function allowDrop(ev) {
+        ev.preventDefault();
+        ev.currentTarget.classList.add('drag-over');
+    }
+
+    function dragLeave(ev) {
+        ev.currentTarget.classList.remove('drag-over');
+    }
+
+    function drag(ev) {
+        ev.dataTransfer.setData("text", ev.target.innerText);
+    }
+
+    function drop(ev) {
+        ev.preventDefault();
+        let dropZone = ev.currentTarget;
+        dropZone.classList.remove('drag-over');
+        let data = ev.dataTransfer.getData("text");
+        
+        if (data) {
+            dropZone.innerText = data;
+            dropZone.classList.add('filled');
+        }
+    }
+
+    function clearSlot(element) {
+        element.innerText = "Drop here";
+        element.classList.remove('filled');
+    }
+
+    function clearAllSlots() {
+        for(let i=0; i<5; i++) {
+            let slot = document.getElementById('slot-'+i);
+            slot.innerText = "Drop here";
+            slot.classList.remove('filled');
+        }
+    }
+
+    // Gameplay Logic
+    function loadQuestion() {
+        currentSalt = selectedSalts[currentRound - 1];
+        document.getElementById('target-salt-name').innerText = currentSalt;
+        currentAttempt = 1;
+        document.getElementById('try-indicator').innerText = "Attempt 1 (10 Marks available)";
+        document.getElementById('try-indicator').style.color = "#6B7280";
+        clearAllSlots();
+        hideFeedback();
+        document.getElementById('btn-submit').style.display = 'block';
+        document.getElementById('btn-next').style.display = 'none';
+        document.getElementById('btn-skip').style.display = 'block';
+        updateScoreBoard();
+    }
+
+    function getValidAnswers(targetSalt) {
+        let valid = [];
+        let c_target = targetSalt.includes('(') ? targetSalt.split(') ')[0] + ')' : targetSalt.split(' ')[0];
+        let a_target = targetSalt.includes('(') ? targetSalt.split(') ')[1] : targetSalt.split(' ')[1];
+        
+        let target_soluble = isSoluble(c_target, a_target);
+
+        if (spa.includes(c_target)) {
+            if (acidMap[a_target]) {
+                valid.push([c_target, 'hydrogencarbonate', acidMap[a_target], 'acid', 'titration']);
+                valid.push([c_target, 'carbonate', acidMap[a_target], 'acid', 'titration']);
+                valid.push([c_target, 'hydroxide', acidMap[a_target], 'acid', 'titration']);
+            }
+        } else if (!target_soluble) {
+            let a_sols = vocab.anions.filter(a => isSoluble(c_target, a));
+            let c_sols = vocab.cations.filter(c => isSoluble(c, a_target));
+            a_sols.forEach(a_sol => {
+                c_sols.forEach(c_sol => {
+                    valid.push([c_target, a_sol, c_sol, a_target, 'precipitation']);
+                    valid.push([c_sol, a_target, c_target, a_sol, 'precipitation']); 
+                });
+            });
+        } else {
+            if (acidMap[a_target]) {
+                valid.push([c_target, 'carbonate', acidMap[a_target], 'acid', 'acid+insoluble reactant']);
+                valid.push([c_target, 'hydroxide', acidMap[a_target], 'acid', 'acid+insoluble reactant']);
+                if (!['copper (II)', 'silver'].includes(c_target)) {
+                    valid.push([c_target, 'metal', acidMap[a_target], 'acid', 'acid+insoluble reactant']);
+                }
+            }
+        }
+        return valid;
+    }
+
+    function evaluateRules(userArr, targetSalt) {
+        let [w1, w2, w3, w4, m] = userArr;
+        let c_target = targetSalt.includes('(') ? targetSalt.split(') ')[0] + ')' : targetSalt.split(' ')[0];
+        let a_target = targetSalt.includes('(') ? targetSalt.split(') ')[1] : targetSalt.split(' ')[1];
+        let target_soluble = isSoluble(c_target, a_target);
+
+        if (m === 'precipitation') {
+            if (target_soluble) return "Target salt is soluble; cannot be prepared by mixing two salt solutions (precipitation).";
+            if (!isSoluble(w1, w2) || !isSoluble(w3, w4)) return "Both reactant salts must be soluble to perform precipitation.";
+        }
+        
+        if (w4 === 'acid') {
+            if (!target_soluble) return "Target salt is insoluble; using acid and solid base/metal will coat the solid and stop the reaction.";
+            if (spa.includes(c_target)) {
+                if (w2 === 'metal') return "SPA metals (Na, K) react explosively with acids; ammonium is not a metal.";
+                if (m !== 'titration') return "Soluble SPA salts require the 'titration' method because both reactants are soluble.";
+            } else {
+                if (w2 === 'metal' && ['copper (II)', 'silver'].includes(c_target)) return "Copper and silver are too unreactive to displace hydrogen from acids.";
+                if (w2 === 'hydrogencarbonate') return "Non-SPA hydrogencarbonates are generally not used or don't exist as stable solids; use carbonate, hydroxide, or metal.";
+                if (m !== 'acid+insoluble reactant') return "Non-SPA soluble salts require the 'acid+insoluble reactant' method to ensure all acid is neutralized by excess solid.";
+            }
+        }
+        
+        return "Incorrect combination. Please check your reactants and method, or consult your teacher.";
+    }
+
+    function submitAnswer() {
+        let userAns = [];
+        // Extract array logically based on how answers are evaluated
+        // Logical Order: Reactant1_Word1(0), Reactant1_Word2(1), Reactant2_Word3(2), Reactant2_Word4(3), Method(4)
+        for(let i=0; i<5; i++) {
+            let val = document.getElementById('slot-'+i).innerText.trim();
+            if (val === "Drop here") {
+                showFeedback("Please fill all 5 slots before submitting!", "error");
+                return;
+            }
+            userAns.push(val);
+        }
+
+        let validAnswers = getValidAnswers(currentSalt);
+        let isCorrect = false;
+
+        for(let v of validAnswers) {
+            if (userAns.every((val, index) => val === v[index])) {
+                isCorrect = true;
+                break;
+            }
+        }
+
+        if (isCorrect) {
+            let pts = currentAttempt === 1 ? 10 : 5;
+            score += pts;
+            showFeedback(`Correct! Excellent job. (+${pts} marks)`, "success");
+            gameHistory.push({salt: currentSalt, status: pts === 10 ? 'Correct (1st Try)' : 'Correct (2nd Try)', valid: validAnswers[0]});
+            endQuestion();
+        } else {
+            let errorMsg = evaluateRules(userAns, currentSalt);
+            
+            if (currentAttempt === 1) {
+                showFeedback(`Wrong: ${errorMsg} Adjust your answers and try again!`, "error");
+                currentAttempt++;
+                document.getElementById('try-indicator').innerText = "Attempt 2 (5 Marks available)";
+                document.getElementById('try-indicator').style.color = "var(--warning)";
+            } else {
+                showFeedback(`Wrong: ${errorMsg} Zero marks.`, "error");
+                gameHistory.push({salt: currentSalt, status: 'Wrong', valid: validAnswers[0]});
+                endQuestion(validAnswers[0]);
+            }
+        }
+    }
+
+    function skipToEnd() {
+        // Fast-forward through remaining questions
+        while(currentRound <= 10) {
+            let fastForwardSalt = selectedSalts[currentRound - 1];
+            let validAnswers = getValidAnswers(fastForwardSalt);
+            gameHistory.push({
+                salt: fastForwardSalt, 
+                status: 'Skipped', 
+                valid: validAnswers[0]
+            });
+            currentRound++;
+        }
+        showSummary();
+    }
+
+    function showFeedback(msg, type) {
+        let fb = document.getElementById('feedback-box');
+        fb.innerText = msg;
+        fb.className = `feedback ${type}`;
+        fb.style.display = 'block';
+    }
+
+    function hideFeedback() {
+        document.getElementById('feedback-box').style.display = 'none';
+    }
+
+    function endQuestion(correctExample = null) {
+        document.getElementById('btn-submit').style.display = 'none';
+        document.getElementById('btn-skip').style.display = 'none';
+        document.getElementById('btn-next').style.display = 'block';
+        updateScoreBoard();
+
+        if (correctExample) {
+            let fb = document.getElementById('feedback-box');
+            fb.innerHTML += `<br><br><strong>A correct answer would be:</strong><br> 
+            Method: ${correctExample[4]}<br>
+            Reactant 1: ${correctExample[0]} ${correctExample[1]} <br> 
+            Reactant 2: ${correctExample[2]} ${correctExample[3]}`;
+        }
+    }
+
+    function nextQuestion() {
+        if (currentRound < 10) {
+            currentRound++;
+            loadQuestion();
+        } else {
+            showSummary();
+        }
+    }
+
+    function updateScoreBoard() {
+        // Prevent round display from exceeding 10 when skipped
+        document.getElementById('round-display').innerText = currentRound > 10 ? 10 : currentRound;
+        document.getElementById('score-display').innerText = score;
+    }
+
+    function showSummary() {
+        document.getElementById('play-area').style.display = 'none';
+        document.getElementById('summary-screen').style.display = 'block';
+        document.getElementById('final-score').innerText = score;
+
+        let tbody = document.getElementById('summary-body');
+        tbody.innerHTML = '';
+
+        gameHistory.forEach(record => {
+            let tr = document.createElement('tr');
+            
+            let statusIcon;
+            if (record.status.includes('Correct')) {
+                statusIcon = `<span class="correct-icon">✓ ${record.status}</span>`;
+            } else if (record.status === 'Skipped') {
+                statusIcon = `<span class="skipped-icon">⏭ Skipped</span>`;
+            } else {
+                statusIcon = `<span class="wrong-icon">✗ ${record.status}</span>`;
+            }
+            
+            let exampleText = "N/A (Correctly Answered)";
+            if ((record.status === 'Wrong' || record.status === 'Skipped') && record.valid) {
+                exampleText = `[${record.valid[4]}] ➔ ${record.valid[0]} ${record.valid[1]} + ${record.valid[2]} ${record.valid[3]}`;
+            }
+
+            tr.innerHTML = `
+                <td><strong>${record.salt}</strong></td>
+                <td>${statusIcon}</td>
+                <td>${exampleText}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    // Start with Intro Screen on load
+    window.onload = showIntro;
+
+</script>
+</body>
+</html>
