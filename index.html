@@ -86,6 +86,34 @@
         .intro-rules li {
             margin-bottom: 10px;
         }
+        
+        .name-input-container {
+            margin-bottom: 30px;
+            background-color: #EEF2FF;
+            padding: 20px;
+            border-radius: 8px;
+            border: 2px dashed var(--primary);
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .name-input {
+            padding: 12px;
+            font-size: 1.1rem;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            width: 80%;
+            margin-top: 10px;
+            text-align: center;
+        }
+        #name-warning {
+            color: var(--danger);
+            display: none;
+            margin-top: 8px;
+            font-size: 0.95rem;
+            font-weight: bold;
+        }
+
         .intro-credit {
             font-size: 1rem;
             color: #6B7280;
@@ -99,7 +127,7 @@
         
         .target-salt-container {
             text-align: center;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
             padding: 20px;
             background-color: #EEF2FF;
             border-radius: 8px;
@@ -111,10 +139,32 @@
             color: var(--primary);
             margin: 10px 0 0 0;
         }
+
+        .mode-toggle-container {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            margin-bottom: 10px;
+            font-size: 0.95rem;
+        }
+        .mode-toggle-container label {
+            font-weight: bold;
+            color: #4B5563;
+            margin-right: 10px;
+        }
+        .mode-select {
+            padding: 6px 10px;
+            border-radius: 6px;
+            border: 1px solid var(--gray);
+            font-size: 0.95rem;
+            cursor: pointer;
+            background-color: white;
+        }
+
         .slots-container {
             display: flex;
             gap: 12px;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
             justify-content: center;
             align-items: flex-end;
             flex-wrap: wrap;
@@ -172,6 +222,11 @@
             gap: 15px;
             background-color: #fcfcfc;
         }
+
+        .word-bank.mode-drag .word { cursor: grab; }
+        .word-bank.mode-drag .word:active { cursor: grabbing; }
+        .word-bank.mode-tap .word { cursor: pointer; }
+
         .category {
             display: flex;
             flex-direction: column;
@@ -196,16 +251,14 @@
             background-color: white;
             border: 1px solid #D1D5DB;
             border-radius: 6px;
-            cursor: grab;
             font-size: 0.85rem;
             font-weight: 500;
             box-shadow: 0 1px 2px rgba(0,0,0,0.05);
             transition: all 0.1s;
             text-align: center;
+            user-select: none;
         }
-        .word:active {
-            cursor: grabbing;
-        }
+        .word:hover { filter: brightness(0.95); }
         .word.cation { border-left: 4px solid #3B82F6; }
         .word.anion { border-left: 4px solid #10B981; }
         .word.base { border-left: 4px solid #F59E0B; }
@@ -257,7 +310,6 @@
         .skipped-icon { color: #6B7280; font-weight: bold; }
         .clear-hint { font-size: 0.7rem; color: #9CA3AF; text-align: center; margin-top: 5px; cursor: pointer; }
         .clear-hint:hover { color: var(--danger); text-decoration: underline; }
-
     </style>
 </head>
 <body>
@@ -273,7 +325,8 @@
             <h3>📖 How to Play</h3>
             <ul>
                 <li>The game consists of <strong>10 rounds</strong>, covering all three major preparation methods (Titration, Precipitation, and Acid + Insoluble Reactant).</li>
-                <li>Your task is to drag and drop the correct words from the option bank into the five empty slots to build a valid reaction equation and select the correct method.</li>
+                <li>Your task is to fill the five empty slots with the correct words to build a valid reaction equation and select the correct method.</li>
+                <li>You can either <strong>Drag & Drop</strong> the words, or use <strong>Click/Tap to Fill</strong> mode.</li>
                 <li>You have a maximum of <strong>two attempts</strong> per question:
                     <ul>
                         <li>Correct on 1st attempt: <strong style="color:var(--success);">10 marks</strong></li>
@@ -281,13 +334,19 @@
                         <li>Incorrect on both attempts: <strong style="color:var(--danger);">0 marks</strong></li>
                     </ul>
                 </li>
-                <li>If your answer is incorrect on the first try, your words will remain in the boxes so you can easily amend them. Read the feedback below the boxes to understand your mistake!</li>
             </ul>
         </div>
 
         <p class="intro-credit">Credit to Pui Kiu College Chemistry Team</p>
         
-        <button class="btn-submit btn-large" onclick="initGame()">Start Game ➔</button>
+        <!-- Name Input -->
+        <div class="name-input-container">
+            <label for="student-name" style="font-weight: bold; font-size: 1.2rem; color: var(--primary);">Student Name</label><br>
+            <input type="text" id="student-name" class="name-input" placeholder="Enter your full name here">
+            <div id="name-warning">⚠ Please enter your name to start the game!</div>
+        </div>
+
+        <button class="btn-submit btn-large" onclick="startGame()">Start Game ➔</button>
     </div>
 
     <!-- Gameplay Area -->
@@ -303,6 +362,15 @@
             <div>Your mission is to prepare:</div>
             <h1 class="target-salt" id="target-salt-name">Loading...</h1>
             <div id="try-indicator" style="margin-top: 10px; font-size: 0.9rem; color: #6B7280; font-weight: bold;">Attempt 1 (10 Marks available)</div>
+        </div>
+
+        <!-- Input Mode Toggle -->
+        <div class="mode-toggle-container">
+            <label for="mode-select">Input Mode:</label>
+            <select id="mode-select" class="mode-select" onchange="updateInputMode()">
+                <option value="tap" selected>👆 Click / Tap to Fill</option>
+                <option value="drag">✋ Drag & Drop</option>
+            </select>
         </div>
 
         <div class="slots-container">
@@ -337,7 +405,7 @@
             </div>
         </div>
 
-        <div class="word-bank">
+        <div class="word-bank mode-tap" id="word-bank-container">
             <div class="category">
                 <div class="category-title">Methods</div>
                 <div class="word-pills" id="bank-methods"></div>
@@ -373,8 +441,9 @@
 
     <!-- Summary Area -->
     <div id="summary-screen">
-        <h2 style="color: var(--primary); text-align: center; font-size: 2.5rem; margin-bottom: 5px;">Game Complete!</h2>
-        <h3 style="text-align: center; margin-top: 0;">Your Final Score: <span id="final-score"></span> / 100</h3>
+        <h2 style="color: var(--primary); text-align: center; font-size: 2.2rem; margin-bottom: 5px;">Game Complete!</h2>
+        <h3 style="text-align: center; margin-top: 0; color: #4B5563;">Student: <span id="summary-student-name" style="color: var(--primary);"></span></h3>
+        <h3 style="text-align: center; margin-top: 10px;">Your Final Score: <span id="final-score"></span> / 100</h3>
         
         <table id="summary-table">
             <thead>
@@ -423,7 +492,7 @@
     const vocab = {
         cations: ['sodium', 'potassium', 'ammonium', 'magnesium', 'calcium', 'barium', 'lead (II)', 'iron (II)', 'iron (III)', 'copper (II)', 'silver', 'zinc'],
         anions: ['nitrate', 'ethanoate', 'hydrogencarbonate', 'chloride', 'bromide', 'iodide', 'sulphate', 'carbonate', 'sulphite', 'phosphate'],
-        bases: ['metal', 'carbonate', 'hydrogencarbonate', 'hydroxide'], // Added hydroxide
+        bases: ['metal', 'carbonate', 'hydrogencarbonate', 'hydroxide'], 
         acids: ['nitric', 'ethanoic', 'hydrochloric', 'sulphuric', 'acid'],
         methods: ['titration', 'precipitation', 'acid+insoluble reactant']
     };
@@ -438,17 +507,32 @@
     let currentSalt = "";
     let selectedSalts = [];
     let gameHistory = [];
+    let studentName = "";
+    let inputMode = "tap"; 
+
+    function getSaltParts(salt) {
+        if (!salt) return { c_target: "", a_target: "" };
+        salt = salt.trim();
+        let lastSpace = salt.lastIndexOf(' ');
+        if (lastSpace === -1) return { c_target: salt, a_target: "" };
+        let c_target = salt.substring(0, lastSpace).trim();
+        let a_target = salt.substring(lastSpace + 1).trim();
+        return { c_target, a_target };
+    }
 
     // Helper: Solubility Rules
     function isSoluble(c, a) {
+        if (!a) return false;
+        let a_clean = a.trim();
         if (spa.includes(c)) return true;
-        if (['nitrate', 'ethanoate', 'hydrogencarbonate'].includes(a)) return true;
-        if (['chloride', 'bromide', 'iodide'].includes(a)) return !['silver', 'lead (II)'].includes(c);
-        if (a === 'sulphate') return !['barium', 'lead (II)', 'calcium'].includes(c);
+        if (['nitrate', 'ethanoate', 'hydrogencarbonate'].includes(a_clean)) return true;
+        if (['chloride', 'bromide', 'iodide'].includes(a_clean)) return !['silver', 'lead (II)'].includes(c);
+        if (a_clean === 'sulphate') return !['barium', 'lead (II)', 'calcium'].includes(c);
+        if (a_clean === 'hydroxide') return ['sodium', 'potassium', 'ammonium', 'barium'].includes(c); 
         return false;
     }
 
-    // Array Shuffle Function (Fisher-Yates)
+    // Array Shuffle Function
     function shuffleArray(array) {
         let curId = array.length;
         while (0 !== curId) {
@@ -466,63 +550,83 @@
         document.getElementById('intro-screen').style.display = 'block';
         document.getElementById('play-area').style.display = 'none';
         document.getElementById('summary-screen').style.display = 'none';
+        document.getElementById('name-warning').style.display = 'none';
+        document.getElementById('student-name').value = studentName;
+    }
+
+    function startGame() {
+        let nameInput = document.getElementById('student-name').value.trim();
+        if (nameInput === "") {
+            document.getElementById('name-warning').style.display = 'block';
+            return;
+        }
+        document.getElementById('name-warning').style.display = 'none';
+        studentName = nameInput;
+        initGame();
     }
 
     function initGame() {
-        document.getElementById('intro-screen').style.display = 'none';
-        document.getElementById('summary-screen').style.display = 'none';
-        document.getElementById('play-area').style.display = 'block';
-        
-        // Populate Word Bank
-        populateBank('bank-cations', vocab.cations, 'cation');
-        populateBank('bank-anions', vocab.anions, 'anion');
-        populateBank('bank-bases', vocab.bases, 'base');
-        populateBank('bank-acids', vocab.acids, 'acid');
-        populateBank('bank-methods', vocab.methods, 'method');
+        try {
+            document.getElementById('intro-screen').style.display = 'none';
+            document.getElementById('summary-screen').style.display = 'none';
+            document.getElementById('play-area').style.display = 'block';
+            
+            populateBank('bank-cations', vocab.cations, 'cation');
+            populateBank('bank-anions', vocab.anions, 'anion');
+            populateBank('bank-bases', vocab.bases, 'base');
+            populateBank('bank-acids', vocab.acids, 'acid');
+            populateBank('bank-methods', vocab.methods, 'method');
 
-        currentRound = 1;
-        score = 0;
-        gameHistory = [];
-        
-        // Ensure all 3 methods are covered
-        let titrationSalts = [];
-        let precipitationSalts = [];
-        let acidInsolubleSalts = [];
+            currentRound = 1;
+            score = 0;
+            gameHistory = [];
+            
+            inputMode = document.getElementById('mode-select').value;
+            updateInputModeUI();
+            
+            let titrationSalts = [];
+            let precipitationSalts = [];
+            let acidInsolubleSalts = [];
 
-        poolSalts.forEach(salt => {
-            let c_target = salt.includes('(') ? salt.split(') ')[0] + ')' : salt.split(' ')[0];
-            let a_target = salt.includes('(') ? salt.split(') ')[1] : salt.split(' ')[1];
-            let target_soluble = isSoluble(c_target, a_target);
+            poolSalts.forEach(salt => {
+                let { c_target, a_target } = getSaltParts(salt);
+                let target_soluble = isSoluble(c_target, a_target);
 
-            if (spa.includes(c_target)) {
-                titrationSalts.push(salt);
-            } else if (!target_soluble) {
-                precipitationSalts.push(salt);
-            } else {
-                acidInsolubleSalts.push(salt);
+                if (spa.includes(c_target)) {
+                    titrationSalts.push(salt);
+                } else if (!target_soluble) {
+                    precipitationSalts.push(salt);
+                } else {
+                    acidInsolubleSalts.push(salt);
+                }
+            });
+
+            titrationSalts = shuffleArray(titrationSalts);
+            precipitationSalts = shuffleArray(precipitationSalts);
+            acidInsolubleSalts = shuffleArray(acidInsolubleSalts);
+
+            let guaranteedSelection = [];
+            if (titrationSalts.length > 0) guaranteedSelection.push(titrationSalts.pop());
+            if (precipitationSalts.length > 0) guaranteedSelection.push(precipitationSalts.pop());
+            if (acidInsolubleSalts.length > 0) guaranteedSelection.push(acidInsolubleSalts.pop());
+
+            let remainingPool = [...titrationSalts, ...precipitationSalts, ...acidInsolubleSalts];
+            remainingPool = shuffleArray(remainingPool);
+            
+            while (guaranteedSelection.length < 10 && remainingPool.length > 0) {
+                guaranteedSelection.push(remainingPool.pop());
             }
-        });
 
-        titrationSalts = shuffleArray(titrationSalts);
-        precipitationSalts = shuffleArray(precipitationSalts);
-        acidInsolubleSalts = shuffleArray(acidInsolubleSalts);
+            selectedSalts = shuffleArray(guaranteedSelection);
+            
+            updateScoreBoard();
+            loadQuestion();
 
-        let guaranteedSelection = [];
-        guaranteedSelection.push(titrationSalts.pop());
-        guaranteedSelection.push(precipitationSalts.pop());
-        guaranteedSelection.push(acidInsolubleSalts.pop());
-
-        let remainingPool = [...titrationSalts, ...precipitationSalts, ...acidInsolubleSalts];
-        remainingPool = shuffleArray(remainingPool);
-        
-        for(let i=0; i<7; i++) {
-            guaranteedSelection.push(remainingPool.pop());
+        } catch (error) {
+            document.getElementById('target-salt-name').innerText = "ERROR: " + error.message;
+            document.getElementById('target-salt-name').style.color = "red";
+            document.getElementById('target-salt-name').style.fontSize = "1rem";
         }
-
-        selectedSalts = shuffleArray(guaranteedSelection);
-        
-        updateScoreBoard();
-        loadQuestion();
     }
 
     function populateBank(containerId, words, cssClass) {
@@ -530,15 +634,47 @@
         container.innerHTML = '';
         words.forEach(word => {
             let div = document.createElement('div');
-            div.className = `word ${cssClass}`;
+            div.className = 'word ' + cssClass;
             div.draggable = true;
             div.innerText = word;
             div.ondragstart = drag;
+            div.onclick = handleWordClick;
             container.appendChild(div);
         });
     }
 
-    // Drag and Drop Logic
+    function updateInputMode() {
+        inputMode = document.getElementById('mode-select').value;
+        updateInputModeUI();
+    }
+
+    function updateInputModeUI() {
+        let bank = document.getElementById('word-bank-container');
+        if (inputMode === 'tap') {
+            bank.classList.remove('mode-drag');
+            bank.classList.add('mode-tap');
+        } else {
+            bank.classList.remove('mode-tap');
+            bank.classList.add('mode-drag');
+        }
+    }
+
+    function handleWordClick(ev) {
+        if (inputMode !== 'tap') return;
+        
+        let clickedWord = ev.target.innerText;
+        let slotsInOrder = ['slot-4', 'slot-0', 'slot-1', 'slot-2', 'slot-3'];
+        
+        for (let slotId of slotsInOrder) {
+            let slot = document.getElementById(slotId);
+            if (slot.innerText.trim() === "Drop here") {
+                slot.innerText = clickedWord;
+                slot.classList.add('filled');
+                break;
+            }
+        }
+    }
+
     function allowDrop(ev) {
         ev.preventDefault();
         ev.currentTarget.classList.add('drag-over');
@@ -549,6 +685,7 @@
     }
 
     function drag(ev) {
+        if (inputMode !== 'drag') return;
         ev.dataTransfer.setData("text", ev.target.innerText);
     }
 
@@ -558,7 +695,7 @@
         dropZone.classList.remove('drag-over');
         let data = ev.dataTransfer.getData("text");
         
-        if (data) {
+        if (data && inputMode === 'drag') {
             dropZone.innerText = data;
             dropZone.classList.add('filled');
         }
@@ -577,8 +714,11 @@
         }
     }
 
-    // Gameplay Logic
     function loadQuestion() {
+        if (!selectedSalts || selectedSalts.length === 0 || !selectedSalts[currentRound - 1]) {
+            document.getElementById('target-salt-name').innerText = "No Salt Loaded!";
+            return;
+        }
         currentSalt = selectedSalts[currentRound - 1];
         document.getElementById('target-salt-name').innerText = currentSalt;
         currentAttempt = 1;
@@ -594,9 +734,7 @@
 
     function getValidAnswers(targetSalt) {
         let valid = [];
-        let c_target = targetSalt.includes('(') ? targetSalt.split(') ')[0] + ')' : targetSalt.split(' ')[0];
-        let a_target = targetSalt.includes('(') ? targetSalt.split(') ')[1] : targetSalt.split(' ')[1];
-        
+        let { c_target, a_target } = getSaltParts(targetSalt);
         let target_soluble = isSoluble(c_target, a_target);
 
         if (spa.includes(c_target)) {
@@ -617,7 +755,13 @@
         } else {
             if (acidMap[a_target]) {
                 valid.push([c_target, 'carbonate', acidMap[a_target], 'acid', 'acid+insoluble reactant']);
-                valid.push([c_target, 'hydroxide', acidMap[a_target], 'acid', 'acid+insoluble reactant']);
+                
+                if (!isSoluble(c_target, 'hydroxide')) {
+                    valid.push([c_target, 'hydroxide', acidMap[a_target], 'acid', 'acid+insoluble reactant']);
+                } else {
+                    valid.push([c_target, 'hydroxide', acidMap[a_target], 'acid', 'titration']);
+                }
+
                 if (!['copper (II)', 'silver'].includes(c_target)) {
                     valid.push([c_target, 'metal', acidMap[a_target], 'acid', 'acid+insoluble reactant']);
                 }
@@ -627,9 +771,8 @@
     }
 
     function evaluateRules(userArr, targetSalt) {
-        let [w1, w2, w3, w4, m] = userArr;
-        let c_target = targetSalt.includes('(') ? targetSalt.split(') ')[0] + ')' : targetSalt.split(' ')[0];
-        let a_target = targetSalt.includes('(') ? targetSalt.split(') ')[1] : targetSalt.split(' ')[1];
+        let w1 = userArr[0], w2 = userArr[1], w3 = userArr[2], w4 = userArr[3], m = userArr[4];
+        let { c_target, a_target } = getSaltParts(targetSalt);
         let target_soluble = isSoluble(c_target, a_target);
 
         if (m === 'precipitation') {
@@ -645,7 +788,12 @@
             } else {
                 if (w2 === 'metal' && ['copper (II)', 'silver'].includes(c_target)) return "Copper and silver are too unreactive to displace hydrogen from acids.";
                 if (w2 === 'hydrogencarbonate') return "Non-SPA hydrogencarbonates are generally not used or don't exist as stable solids; use carbonate, hydroxide, or metal.";
-                if (m !== 'acid+insoluble reactant') return "Non-SPA soluble salts require the 'acid+insoluble reactant' method to ensure all acid is neutralized by excess solid.";
+                
+                if (w2 === 'hydroxide' && isSoluble(c_target, 'hydroxide')) {
+                    if (m !== 'titration') return c_target + " hydroxide is soluble! Reactions between two solutions require the 'titration' method, not 'acid+insoluble reactant'.";
+                } else {
+                    if (m !== 'acid+insoluble reactant') return "Non-SPA soluble salts require the 'acid+insoluble reactant' method to ensure all acid is neutralized by excess solid.";
+                }
             }
         }
         
@@ -654,8 +802,6 @@
 
     function submitAnswer() {
         let userAns = [];
-        // Extract array logically based on how answers are evaluated
-        // Logical Order: Reactant1_Word1(0), Reactant1_Word2(1), Reactant2_Word3(2), Reactant2_Word4(3), Method(4)
         for(let i=0; i<5; i++) {
             let val = document.getElementById('slot-'+i).innerText.trim();
             if (val === "Drop here") {
@@ -669,28 +815,29 @@
         let isCorrect = false;
 
         for(let v of validAnswers) {
-            if (userAns.every((val, index) => val === v[index])) {
-                isCorrect = true;
-                break;
+            let match = true;
+            for(let j=0; j<5; j++) {
+                if (userAns[j] !== v[j]) { match = false; break; }
             }
+            if (match) { isCorrect = true; break; }
         }
 
         if (isCorrect) {
             let pts = currentAttempt === 1 ? 10 : 5;
             score += pts;
-            showFeedback(`Correct! Excellent job. (+${pts} marks)`, "success");
+            showFeedback("Correct! Excellent job. (+" + pts + " marks)", "success");
             gameHistory.push({salt: currentSalt, status: pts === 10 ? 'Correct (1st Try)' : 'Correct (2nd Try)', valid: validAnswers[0]});
             endQuestion();
         } else {
             let errorMsg = evaluateRules(userAns, currentSalt);
             
             if (currentAttempt === 1) {
-                showFeedback(`Wrong: ${errorMsg} Adjust your answers and try again!`, "error");
+                showFeedback("Wrong: " + errorMsg + " Adjust your answers and try again!", "error");
                 currentAttempt++;
                 document.getElementById('try-indicator').innerText = "Attempt 2 (5 Marks available)";
                 document.getElementById('try-indicator').style.color = "var(--warning)";
             } else {
-                showFeedback(`Wrong: ${errorMsg} Zero marks.`, "error");
+                showFeedback("Wrong: " + errorMsg + " Zero marks.", "error");
                 gameHistory.push({salt: currentSalt, status: 'Wrong', valid: validAnswers[0]});
                 endQuestion(validAnswers[0]);
             }
@@ -698,7 +845,6 @@
     }
 
     function skipToEnd() {
-        // Fast-forward through remaining questions
         while(currentRound <= 10) {
             let fastForwardSalt = selectedSalts[currentRound - 1];
             let validAnswers = getValidAnswers(fastForwardSalt);
@@ -715,7 +861,7 @@
     function showFeedback(msg, type) {
         let fb = document.getElementById('feedback-box');
         fb.innerText = msg;
-        fb.className = `feedback ${type}`;
+        fb.className = "feedback " + type;
         fb.style.display = 'block';
     }
 
@@ -731,10 +877,10 @@
 
         if (correctExample) {
             let fb = document.getElementById('feedback-box');
-            fb.innerHTML += `<br><br><strong>A correct answer would be:</strong><br> 
-            Method: ${correctExample[4]}<br>
-            Reactant 1: ${correctExample[0]} ${correctExample[1]} <br> 
-            Reactant 2: ${correctExample[2]} ${correctExample[3]}`;
+            fb.innerHTML += "<br><br><strong>A correct answer would be:</strong><br>" +
+            "Method: " + correctExample[4] + "<br>" +
+            "Reactant 1: " + correctExample[0] + " " + correctExample[1] + "<br>" + 
+            "Reactant 2: " + correctExample[2] + " " + correctExample[3];
         }
     }
 
@@ -748,7 +894,6 @@
     }
 
     function updateScoreBoard() {
-        // Prevent round display from exceeding 10 when skipped
         document.getElementById('round-display').innerText = currentRound > 10 ? 10 : currentRound;
         document.getElementById('score-display').innerText = score;
     }
@@ -756,7 +901,9 @@
     function showSummary() {
         document.getElementById('play-area').style.display = 'none';
         document.getElementById('summary-screen').style.display = 'block';
+        
         document.getElementById('final-score').innerText = score;
+        document.getElementById('summary-student-name').innerText = studentName;
 
         let tbody = document.getElementById('summary-body');
         tbody.innerHTML = '';
@@ -766,28 +913,25 @@
             
             let statusIcon;
             if (record.status.includes('Correct')) {
-                statusIcon = `<span class="correct-icon">✓ ${record.status}</span>`;
+                statusIcon = '<span class="correct-icon">✓ ' + record.status + '</span>';
             } else if (record.status === 'Skipped') {
-                statusIcon = `<span class="skipped-icon">⏭ Skipped</span>`;
+                statusIcon = '<span class="skipped-icon">⏭ Skipped</span>';
             } else {
-                statusIcon = `<span class="wrong-icon">✗ ${record.status}</span>`;
+                statusIcon = '<span class="wrong-icon">✗ ' + record.status + '</span>';
             }
             
             let exampleText = "N/A (Correctly Answered)";
             if ((record.status === 'Wrong' || record.status === 'Skipped') && record.valid) {
-                exampleText = `[${record.valid[4]}] ➔ ${record.valid[0]} ${record.valid[1]} + ${record.valid[2]} ${record.valid[3]}`;
+                exampleText = "[" + record.valid[4] + "] ➔ " + record.valid[0] + " " + record.valid[1] + " + " + record.valid[2] + " " + record.valid[3];
             }
 
-            tr.innerHTML = `
-                <td><strong>${record.salt}</strong></td>
-                <td>${statusIcon}</td>
-                <td>${exampleText}</td>
-            `;
+            tr.innerHTML = "<td><strong>" + record.salt + "</strong></td>" +
+                           "<td>" + statusIcon + "</td>" +
+                           "<td>" + exampleText + "</td>";
             tbody.appendChild(tr);
         });
     }
 
-    // Start with Intro Screen on load
     window.onload = showIntro;
 
 </script>
